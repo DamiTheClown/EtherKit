@@ -1,0 +1,26 @@
+# TODO
+
+- installation.md
+    - Instalace programu.
+    - Instalace knihoven.
+    - Požadavky na systém.
+
+- usage.md
+    - Jak program spustit.
+    - Popis jednotlivých modulů.
+    - Nejčastější scénáře použití.
+
+- architecture.md
+    - Jak je projekt rozdělen.
+    - Jak spolu komunikují moduly.
+    - Datový tok aplikace.
+
+- faq.md
+    - Nejčastější chyby.
+    - Řešení problémů.
+    - Časté dotazy.
+
+- legal.md
+    - Etické zásady.
+    - Autorizované používání.
+    - Omezení odpovědnosti.

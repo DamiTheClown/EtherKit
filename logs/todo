@@ -1,0 +1,7 @@
+# TODO
+
+- Oddělit běžné logy od chybových.
+- Přidat časové značky.
+- Přidat úrovně logování (INFO, WARNING, ERROR).
+- Automaticky vytvářet nové logy.
+- Archivovat staré logy.
