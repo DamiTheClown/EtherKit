@@ -1,11 +1,44 @@
-# TODO
+import os
+import time
+import json
+import datetime
 
-- Pomocné funkce používané v celém projektu.
-- Barevný výpis do terminálu.
-- Formátování tabulek.
-- Načítání a ukládání souborů.
-- Práce s cestami.
-- Kontrola vstupních hodnot.
-- Kontrola existence souborů.
-- Generování časových razítek.
-- Opakovaně používané pomocné funkce.
+# TODO:
+# - jednotný error handler
+# - exception management
+# - config loader
+
+def clear_terminal():
+    """
+    Vyčistí CLI
+    """
+
+
+def timestamp():
+    """
+    Vrátí aktuální čas
+    """
+
+
+def save_json(data,path):
+    """
+    Uložení výsledků
+    """
+
+
+def load_json(path):
+    """
+    Načtení výsledků
+    """
+
+
+def check_dependencies():
+    """
+    Kontrola potřebných programů
+    """
+
+
+def create_directory(path):
+    """
+    Vytvoření složek
+    """
