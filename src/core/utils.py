@@ -25,13 +25,31 @@ def timestamp():
 
 
 def create_directory():
+    #test file
+    file = (Path.cwd() / "logs" / "test.txt")
+    json_file = (Path.cwd() / "logs" / "test.json")
+
     #the / automatically take it as a root directory
     #Path.cwd() gives the current working directory
-    path = (Path.cwd() / "logs").resolve() 
-    if path.exists() and path.is_dir():
-        print(path.resolve())
+    directory = (Path.cwd() / "logs").resolve() 
+    if directory.exists() and directory.is_dir():
+        print("Directory exists")
+        if file.exists() and file.is_file():
+            print("file exists")
+        else:
+            print("file doesnt exist, creating file")
+            file.touch()
+        if json_file.exists() and json_file.is_file():
+            print("JSON file exists")
+        else:
+            print("JSON file doesnt exist, creating file")
+            json_file.touch()
     else:
-        print("neexistuje" + str(path.resolve()))
+        print("path doesnt exist, creating directory and files")
+        directory.mkdir(parents=True, exist_ok=True)
+        file.touch()
+        json_file.touch()
+
 
 def save_json(data,path):
     """
