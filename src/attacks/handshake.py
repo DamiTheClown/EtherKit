@@ -1,9 +1,33 @@
-# TODO
+import os
+from scapy.all import *
 
-- Připravit modul pro práci se zachycenými daty.
-- Kontrolovat správnost vstupních souborů.
-- Načítat metadata.
-- Zobrazit základní statistiky.
-- Exportovat výsledky analýzy.
-- Logovat chyby.
-- Připravit data pro závěrečný report.
+
+# TODO:
+# - metadata capture
+# - kontrola kvality dat
+# - report pro prezentaci
+
+
+class HandshakeModule:
+
+
+    def __init__(self):
+        pass
+
+
+    def load_capture(self):
+        """
+        Načtení capture souboru
+        """
+
+
+    def analyze_capture(self):
+        """
+        Analýza uložených dat
+        """
+
+
+    def generate_report(self):
+        """
+        Vytvoření reportu
+        """

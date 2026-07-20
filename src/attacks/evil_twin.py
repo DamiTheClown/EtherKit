@@ -1,9 +1,16 @@
-# TODO
+# TODO:
+# - izolovaný režim
+# - demo mód
+# - automatický cleanup
 
-- Připravit konfiguraci modulu.
-- Oddělit logiku od uživatelského rozhraní.
-- Validovat vstupy.
-- Zobrazovat průběh demonstrace.
-- Logovat důležité události.
-- Po ukončení uklidit všechny dočasné soubory.
-- Připravit data pro report.
+
+class EvilTwinModule:
+
+
+    def setup():
+
+    def monitor():
+
+    def report():
+
+    def cleanup():

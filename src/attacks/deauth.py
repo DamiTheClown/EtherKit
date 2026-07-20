@@ -1,9 +1,30 @@
-# TODO
+# TODO:
+# - přidat bezpečnostní potvrzení
+# - přidat audit log
+# - přidat časový limit
+# - přidat ochranu proti omylu
 
-- Připravit uživatelské rozhraní modulu.
-- Načíst konfiguraci.
-- Ověřit potřebná oprávnění.
-- Zobrazovat stav běžící demonstrace.
-- Zapisovat průběh do logů.
-- Zachytávat chyby.
-- Po dokončení vytvořit souhrn výsledků.
+
+class DeauthModule:
+
+
+    def __init__(self):
+        pass
+
+
+    def select_target(self):
+        """
+        Výběr cíle
+        """
+
+
+    def start_demo(self):
+        """
+        Spuštění demonstrační části
+        """
+
+
+    def stop_demo(self):
+        """
+        Ukončení
+        """
