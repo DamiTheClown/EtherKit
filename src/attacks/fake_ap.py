@@ -13,19 +13,19 @@ class FakeAPModule:
         self.state = "STOPPED"
         self.ap_ssid = {}
 
-    def configure(self, networks_dict, interface):
+    def configure(self, networks_dict):
         self.ap_ssid = networks_dict
-        self.interface = interface
+        self.interface = "wlan0"
 
     def start(self):
         self.state = "RUNNING"
 
         try:
-            print(f"Turning off monitor mode on interface {self.interface}...")
+            print(f"Turning on monitor mode on interface {self.interface}...")
             subprocess.run(["ip", "link", "set", self.interface, "down"], check=True)
             subprocess.run(["iw", self.interface, "set",  "type", "monitor"], check=True)
             subprocess.run(["ip", "link", "set", self.interface, "up"], check=True)
-            print(f"Monitor mode disabled on {self.interface}.")
+            print(f"Monitor mode enabled on {self.interface}.")
 
         except subprocess.CalledProcessError as e:
             print(f"Error during subprocess execution: {e} on interface {self.interface}.")
@@ -78,5 +78,5 @@ class FakeAPModule:
 
 if __name__ == "__main__":
     fake_ap = FakeAPModule()
-    fake_ap.configure({"FakeNetwork1": "password123", "FakeNetwork2": "password456"})
+    fake_ap.configure({"FakeNetwork1": None, "FakeNetwork2": None, "SkibidyRizzler": None})
     fake_ap.start()
