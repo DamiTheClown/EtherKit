@@ -1,4 +1,3 @@
-# main.py
 import argparse
 import sys
 from pathlib import Path
@@ -6,7 +5,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parent / "core"))
 
 from core.scanner import WifiScanner
-from core.utils import check_dependencies, clear_terminal
+from core.utils import check_dependencies, check_platform
 
 
 def main():
@@ -20,10 +19,9 @@ def main():
     
     args = parser.parse_args()
     
-    clear_terminal()
+    check_platform()
     check_dependencies()
     
-
     
     scanner = WifiScanner(interface=args.monitor)
     
