@@ -1,5 +1,7 @@
 import json
 from dataclasses import dataclass, asdict
+import subprocess
+import sys
 
 from rich.console import Console
 from rich.table import Table
@@ -19,6 +21,36 @@ class WifiScanner:
         self.timeout = timeout
         self.networks = {}
         self.console = Console()
+
+    def enable_monitor_mode(self):
+        """Enables monitor mod using ip and iw commands."""
+        self.console.print(f"[yellow]Enabling monitor mode on {self.interface}...[/yellow]")
+        try:
+            subprocess.run(["sudo", "pkill", "wpa_supplicant"], stderr=subprocess.DEVNULL)
+
+            subprocess.run(["sudo", "ip", "link", "set", self.interface, "down"], check=True)
+            subprocess.run(["sudo", "iw", "dev", self.interface, "set", "type", "monitor"], check=True)
+            subprocess.run(["sudo", "ip", "link", "set", self.interface, "up"], check=True)
+
+            self.console.print(f"[green]Monitor mode enabled on {self.interface}.[/green]")
+        except subprocess.CalledProcessError as e:
+            self.console.print(f"[red]Failed to enable monitor mode: {e}[/red]")
+            self.console.print("[red]Please ensure you have the necessary permissions and that the interface exists.[/red]")
+            sys.exit(1)
+
+    def disable_monitor_mode(self):
+        """Disables monitor mode and returns the interface to managed mode."""
+        self.console.print(f"[yellow]Disabling monitor mode on {self.interface}...[/yellow]")
+        try:
+            subprocess.run(["sudo", "ip", "link", "set", self.interface, "down"], check=True)
+            subprocess.run(["sudo", "iw", "dev", self.interface, "set", "type", "managed"], check=True)
+            subprocess.run(["sudo", "ip", "link", "set", self.interface, "up"], check=True)
+
+            self.console.print(f"[green]Monitor mode disabled on {self.interface}.[/green]")
+        except subprocess.CalledProcessError as e:
+            self.console.print(f"[red]Failed to disable monitor mode: {e}[/red]")
+            sys.exit(1)
+
 
     def packet_handler(self, packet):
         if not packet.haslayer(Dot11):
@@ -72,6 +104,7 @@ class WifiScanner:
             )
 
     def scan_networks(self):
+        """Pure network scanning logic."""
         self.networks.clear()
         
         with self.console.status(f"[bold green]Scanning on {self.interface} for {self.timeout}s...", spinner="dots"):
@@ -84,7 +117,7 @@ class WifiScanner:
         sorted_networks = sorted(self.networks.values(), key=lambda x: x.signal, reverse=True)
 
         if not sorted_networks:
-            self.console.print(f"[red]No networks found on {self.interface}. Make sure the interface is in monitor mode.[/red]")
+            self.console.print(f"[red]No networks found on {self.interface}.[/red]")
             return
 
         table = Table(title="WiFi Scan Results")
@@ -102,7 +135,7 @@ class WifiScanner:
                 network.bssid,
                 str(network.channel),
                 network.encryption,
-                str(network.signal)
+                f"{network.signal} dBm"
             )
 
         self.console.print(table)
