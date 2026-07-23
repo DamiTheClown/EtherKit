@@ -7,6 +7,11 @@ import sys, subprocess
 # - logování
 # - cleanup po ukončení
 
+# airmon-ng check kill
+
+# airmon-ng start wlan0
+# airmon-ng stop wlan0
+#sudo systemctl start NetworkManager
 
 class FakeAPModule:
     def __init__(self):
