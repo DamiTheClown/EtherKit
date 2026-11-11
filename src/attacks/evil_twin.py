@@ -6,7 +6,8 @@
 
 class EvilTwinModule:
 
-
+    def __init__(self):
+        ...
     def setup():
         ...
 

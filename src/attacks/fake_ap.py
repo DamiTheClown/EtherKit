@@ -6,6 +6,8 @@ from core.monitor_mode import *
 # - stav modulu
 # - logování
 # - cleanup po ukončení
+passwd = b"\x01\x00\x00\x0f\xac\x04\x01\x00\x00\x0f\xac\x04\x01\x00\x00\x0f\xac\x02\x00\x00"
+ap_rates = b"\x82\x84\x8b\x96"
 
 class FakeAPModule:
     def __init__(self):
@@ -38,15 +40,15 @@ class FakeAPModule:
                                 Dot11(type=0, subtype=8, addr1="ff:ff:ff:ff:ff:ff", addr2=mac_address, addr3=mac_address) / 
                                 Dot11Beacon(cap="ESS") / 
                                 Dot11Elt(ID="SSID", info=ssid) /
-                                Dot11Elt(ID="Rates", info=b"\x82\x84\x8b\x96")/
+                                Dot11Elt(ID="Rates", info=ap_rates)/
                                 Dot11Elt(ID="DSset", info=channel_byte))
                     else:
                         packet = (RadioTap() / 
                                 Dot11(type=0, subtype=8, addr1="ff:ff:ff:ff:ff:ff", addr2=mac_address, addr3=mac_address) / 
                                 Dot11Beacon(cap="ESS+privacy") / 
                                 Dot11Elt(ID="SSID", info=ssid) /
-                                Dot11Elt(ID=48, info=b"\x01\x00\x00\x0f\xac\x04\x01\x00\x00\x0f\xac\x04\x01\x00\x00\x0f\xac\x02\x00\x00") /
-                                Dot11Elt(ID="Rates", info=b"\x82\x84\x8b\x96")/
+                                Dot11Elt(ID=48, info=passwd) /
+                                Dot11Elt(ID="Rates", info=ap_rates)/
                                 Dot11Elt(ID="DSset", info=channel_byte))
                     sendp(packet, iface=self.interface, count=1, verbose=False)  
 

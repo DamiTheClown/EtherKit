@@ -6,9 +6,11 @@ in monitor mode.
 """
 
 import json
-from dataclasses import dataclass, asdict
 import subprocess
 import sys
+import threading
+import time
+from dataclasses import dataclass, asdict
 
 from rich.console import Console
 from rich.table import Table
@@ -20,9 +22,9 @@ class Network:
     """Stores information about a discovered WiFi network."""
     ssid: str          # Network name (SSID)
     bssid: str         # AP MAC address
-    channel: int        # Channel number (1-13)
-    encryption: str     # OPEN / WEP / WPA / WPA2
-    signal: int          # Signal strength in dBm
+    channel: int       # Channel number (1-13)
+    encryption: str    # OPEN / WEP / WPA / WPA2
+    signal: int        # Signal strength in dBm
 
 
 class WifiScanner:
@@ -33,6 +35,7 @@ class WifiScanner:
         self.timeout = timeout       # scan duration in seconds
         self.networks = {}           # BSSID -> Network mapping
         self.console = Console()
+        self.is_scanning = False
 
     # ------------------------------------------------------------------
     # Interface control
@@ -42,12 +45,11 @@ class WifiScanner:
         """
         Enables monitor mode on the network interface.
         
-        Stops wpa_supplicant to prevent interface conflicts.
+        Sets the interface as unmanaged by NetworkManager to prevent conflicts.
         """
         self.console.print(f"[yellow]Enabling monitor mode on {self.interface}...[/yellow]")
         try:
-            # kill wpa_supplicant to prevent interference
-            subprocess.run(["sudo", "pkill", "wpa_supplicant"], stderr=subprocess.DEVNULL)
+            subprocess.run(["sudo", "nmcli", "device", "set", self.interface, "managed", "no"], stderr=subprocess.DEVNULL)
 
             subprocess.run(["sudo", "ip", "link", "set", self.interface, "down"], check=True)
             subprocess.run(["sudo", "iw", "dev", self.interface, "set", "type", "monitor"], check=True)
@@ -66,6 +68,8 @@ class WifiScanner:
             subprocess.run(["sudo", "ip", "link", "set", self.interface, "down"], check=True)
             subprocess.run(["sudo", "iw", "dev", self.interface, "set", "type", "managed"], check=True)
             subprocess.run(["sudo", "ip", "link", "set", self.interface, "up"], check=True)
+            
+            subprocess.run(["sudo", "nmcli", "device", "set", self.interface, "managed", "yes"], stderr=subprocess.DEVNULL)
 
             self.console.print(f"[green]Monitor mode disabled on {self.interface}.[/green]")
         except subprocess.CalledProcessError as e:
@@ -78,19 +82,15 @@ class WifiScanner:
 
     def packet_handler(self, packet):
         """Processes captured packets and filters 802.11 management frames."""
-        # ignore non-WiFi frames
         if not packet.haslayer(Dot11):
             return
 
-        # check for Beacon (subtype 8) or Probe Response (subtype 5)
         is_beacon_or_probe_response = packet.type == 0 and packet.subtype in (8, 5)
         if not is_beacon_or_probe_response:
             return
 
-        # addr2 contains the AP BSSID
         bssid = packet[Dot11].addr2
         if not bssid or bssid in self.networks:
-            # skip invalid or already processed BSSIDs
             return
 
         ssid = self._extract_ssid(packet)
@@ -117,7 +117,6 @@ class WifiScanner:
         try:
             return raw_ssid.decode("utf-8").strip() or "<hidden>"
         except UnicodeDecodeError:
-            # corrupted SSID data
             return "<invalid>"
 
     def _extract_channel_and_encryption(self, packet):
@@ -126,28 +125,23 @@ class WifiScanner:
         encryption = "OPEN"
 
         element = packet[Dot11Elt]
-        # iterate through Information Elements
         while isinstance(element, Dot11Elt):
             if element.ID == 3:
-                # DS Parameter Set (channel info)
                 try:
                     channel = int(element.info[0])
                 except (TypeError, IndexError):
                     pass
 
             elif element.ID == 48:
-                # RSN Element (WPA2/WPA3)
                 encryption = "WPA2"
 
             elif element.ID == 221 and element.info.startswith(b"\x00P\xf2\x01\x01\x00"):
-                # Vendor-specific OUI for WPA
                 if encryption == "OPEN":
                     encryption = "WPA"
 
             element = element.payload
 
         if encryption == "OPEN" and self._has_privacy_bit(packet):
-            # fallback to WEP if privacy bit is set without WPA/WPA2 tags
             encryption = "WEP"
 
         return channel, encryption
@@ -169,19 +163,41 @@ class WifiScanner:
             signal = getattr(packet[RadioTap], "dBm_AntSignal", None)
             if signal is not None:
                 return int(signal)
-        return -100  # default value when signal is missing
+        return -100
 
     # ------------------------------------------------------------------
     # Output and export
     # ------------------------------------------------------------------
 
+    def _channel_hopper(self):
+        """Cycles through standard 2.4GHz channels in the background."""
+        channels = [1, 6, 11, 2, 3, 4, 5, 7, 8, 9, 10, 12, 13]
+        idx = 0
+        while self.is_scanning:
+            try:
+                subprocess.run(
+                    ["sudo", "iw", "dev", self.interface, "set", "channel", str(channels[idx])],
+                    stdout=subprocess.DEVNULL, 
+                    stderr=subprocess.DEVNULL
+                )
+                idx = (idx + 1) % len(channels)
+                time.sleep(0.5)
+            except Exception:
+                pass
+
     def scan_networks(self):
-        """Runs packet sniffing for specified timeout."""
+        """Runs packet sniffing for specified timeout with background channel hopping."""
         self.networks.clear()
+        self.is_scanning = True
+
+        hopper_thread = threading.Thread(target=self._channel_hopper, daemon=True)
+        hopper_thread.start()
 
         with self.console.status(f"[bold green]Scanning on {self.interface} for {self.timeout}s...", spinner="dots"):
-            # store=False keeps memory usage low
             sniff(iface=self.interface, prn=self.packet_handler, timeout=self.timeout, store=False)
+
+        self.is_scanning = False
+        hopper_thread.join(timeout=1)
 
         return self._sorted_networks()
 
